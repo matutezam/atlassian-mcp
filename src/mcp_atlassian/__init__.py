@@ -82,11 +82,9 @@ async def _watch_parent_exit(stop_event: threading.Event) -> None:
     await loop.run_in_executor(None, _poll_parent_alive)
 
 
-async def _run_stdio_with_stdin_guard(run_kwargs: dict[str, object]) -> None:
-    from mcp_atlassian.servers import main_mcp
-
+async def _run_stdio_with_stdin_guard(server: object, run_kwargs: dict[str, object]) -> None:
     parent_watch_stop = threading.Event()
-    server_task = asyncio.create_task(main_mcp.run_async(**run_kwargs))
+    server_task = asyncio.create_task(server.run_async(**run_kwargs))
     parent_task = asyncio.create_task(_watch_parent_exit(parent_watch_stop))
 
     done, pending = await asyncio.wait(
@@ -414,7 +412,11 @@ def main(
     if click_ctx and was_option_provided(click_ctx, "jira_projects_filter"):
         os.environ["JIRA_PROJECTS_FILTER"] = jira_projects_filter
 
-    from mcp_atlassian.servers import main_mcp
+    profile = normalize_profile(os.getenv("MCP_PROFILE"))
+    from mcp_atlassian.servers import get_server_for_profile
+
+    runtime_server = get_server_for_profile(profile)
+    logger.info("Selected MCP profile: %s", profile)
 
     run_kwargs = {
         "transport": final_transport,
@@ -459,7 +461,7 @@ def main(
         logger.debug("Starting asyncio event loop...")
 
         if final_transport == "stdio":
-            asyncio.run(_run_stdio_with_stdin_guard(run_kwargs))
+            asyncio.run(_run_stdio_with_stdin_guard(runtime_server, run_kwargs))
         else:
             # For HTTP transports (SSE, streamable-http), don't use stdin monitoring
             # as it causes premature shutdown when the client closes stdin
@@ -467,7 +469,7 @@ def main(
             logger.debug(
                 f"Running server for {final_transport} transport without stdin monitoring"
             )
-            asyncio.run(main_mcp.run_async(**run_kwargs))
+            asyncio.run(runtime_server.run_async(**run_kwargs))
     except (KeyboardInterrupt, SystemExit) as e:
         logger.info(f"Server shutdown initiated: {type(e).__name__}")
     except Exception as e:
@@ -481,3 +483,7 @@ __all__ = ["main", "__version__"]
 
 if __name__ == "__main__":
     main()
+
+
+def normalize_profile(value: str | None) -> str:
+    return "progressive" if str(value or "direct").strip().lower() == "progressive" else "direct"

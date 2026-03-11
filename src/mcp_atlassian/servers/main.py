@@ -344,8 +344,9 @@ class AtlassianMCP(FastMCP[MainAppContext]):
             final_path = self._normalize_http_path(configured_path)
             self._active_streamable_http_path = final_path
 
+        api_key_mw = Middleware(ApiKeyMiddleware, mcp_server_ref=self)
         user_token_mw = Middleware(UserTokenMiddleware, mcp_server_ref=self)
-        final_middleware_list = [user_token_mw]
+        final_middleware_list = [api_key_mw, user_token_mw]
         if middleware:
             final_middleware_list.extend(middleware)
         app = super().http_app(
@@ -363,6 +364,62 @@ class AtlassianMCP(FastMCP[MainAppContext]):
 token_validation_cache: TTLCache[
     int, tuple[bool, str | None, JiraFetcher | None, ConfluenceFetcher | None]
 ] = TTLCache(maxsize=100, ttl=300)
+
+
+class ApiKeyMiddleware:
+    """Protect MCP HTTP transport with a static Bearer token when configured."""
+
+    def __init__(
+        self, app: ASGIApp, mcp_server_ref: Optional["AtlassianMCP"] = None
+    ) -> None:
+        self.app = app
+        self.mcp_server_ref = mcp_server_ref
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        api_key = os.getenv("MCP_API_KEY")
+        if not api_key or not self._should_protect(scope):
+            await self.app(scope, receive, send)
+            return
+
+        headers = dict(scope.get("headers", []))
+        auth_header = headers.get(b"authorization", b"").decode("latin-1")
+        if auth_header == f"Bearer {api_key}":
+            await self.app(scope, receive, send)
+            return
+
+        body = json.dumps(
+            {"error": "Unauthorized. Set Authorization: Bearer <MCP_API_KEY>"}
+        ).encode("utf-8")
+        await send(
+            {
+                "type": "http.response.start",
+                "status": 401,
+                "headers": [
+                    (b"content-type", b"application/json"),
+                    (b"content-length", str(len(body)).encode("ascii")),
+                ],
+            }
+        )
+        await send({"type": "http.response.body", "body": body})
+
+    def _should_protect(self, scope: Scope) -> bool:
+        if not self.mcp_server_ref:
+            return False
+
+        path = AtlassianMCP._normalize_http_path(scope.get("path", ""))
+        if path == "/healthz":
+            return False
+
+        try:
+            mcp_path = self.mcp_server_ref.get_streamable_http_path()
+            return path == mcp_path
+        except (AttributeError, ValueError) as exc:
+            logger.warning("Error checking API key middleware path: %s", exc)
+            return False
 
 
 class UserTokenMiddleware:
@@ -580,6 +637,12 @@ class UserTokenMiddleware:
 
             # Process Authorization header
             if auth_header_str:
+                internal_api_key = os.getenv("MCP_API_KEY")
+                if internal_api_key and auth_header_str == f"Bearer {internal_api_key}":
+                    logger.debug(
+                        "UserTokenMiddleware: Skipping Authorization parsing for MCP API key header."
+                    )
+                    return
                 self._parse_auth_header(auth_header_str, scope)
             else:
                 logger.debug("UserTokenMiddleware: No Authorization header provided")

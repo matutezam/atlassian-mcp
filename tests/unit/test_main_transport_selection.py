@@ -141,7 +141,11 @@ class TestMainTransportSelection:
             with patch(
                 "mcp_atlassian._watch_parent_exit", side_effect=fake_watch_parent
             ):
-                await _run_stdio_with_stdin_guard({"transport": "stdio"})
+                from mcp_atlassian.servers import main_mcp
+
+                await _run_stdio_with_stdin_guard(
+                    main_mcp, {"transport": "stdio"}
+                )
 
         assert server_cancelled.is_set()
 
