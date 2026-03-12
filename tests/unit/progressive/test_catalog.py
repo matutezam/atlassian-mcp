@@ -103,7 +103,7 @@ async def test_execute_write_capability_requires_approval():
                 description="Create issue",
                 safety_class="guarded",
                 keywords=("issue",),
-                example={"project_key": "CAPSULE"},
+                example={"project_key": "PROJ"},
                 aliases=(),
                 args_schema={"type": "object", "properties": {}},
             ),
@@ -140,8 +140,8 @@ def test_discover_capabilities_prefers_relevant_issue_search():
                 summary="Search Jira issues using JQL.",
                 description="Search Jira issues using JQL.",
                 safety_class="safe",
-                keywords=("search", "issues", "jql", "capsule"),
-                example={"jql": "project = CAPSULE"},
+                keywords=("search", "issues", "jql", "project"),
+                example={"jql": "project = PROJ"},
                 aliases=("jira.search_issues",),
                 args_schema={"type": "object", "properties": {}},
             ),
@@ -162,5 +162,5 @@ def test_discover_capabilities_prefers_relevant_issue_search():
         aliases={"jira.search_issues": "jira.search", "jira.list_projects": "jira.get_all_projects"},
     )
 
-    result = discover_capabilities(catalog, "buscar issues capsule", "read")
+    result = discover_capabilities(catalog, "buscar issues con jql", "read")
     assert result["capabilities"][0]["id"] == "jira.search"

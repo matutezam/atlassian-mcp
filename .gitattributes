@@ -1,0 +1,3 @@
+# Keep local and operator guidance out of source archives.
+AGENTS.md export-ignore
+AGENTS.local.example.md export-ignore

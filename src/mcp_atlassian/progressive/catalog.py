@@ -116,7 +116,7 @@ JIRA_OVERRIDES: dict[str, ToolOverride] = {
     "get_all_projects": ToolOverride(
         category="projects",
         summary="List available Jira projects.",
-        keywords=("projects", "project list", "capsule", "portfolio"),
+        keywords=("projects", "project list", "workspace", "portfolio"),
         aliases=("jira.list_projects",),
         example={},
     ),
@@ -125,27 +125,27 @@ JIRA_OVERRIDES: dict[str, ToolOverride] = {
         summary="Search Jira issues using JQL.",
         keywords=("search", "jql", "issues", "backlog", "pending"),
         aliases=("jira.search_issues",),
-        example={"jql": "project = CAPSULE ORDER BY updated DESC", "limit": 10},
+        example={"jql": "project = PROJ ORDER BY updated DESC", "limit": 10},
     ),
     "get_issue": ToolOverride(
         category="issues",
         summary="Get detailed information for one Jira issue.",
         keywords=("issue", "ticket", "status", "details"),
-        example={"issue_key": "CAPSULE-123"},
+        example={"issue_key": "PROJ-123"},
     ),
     "get_transitions": ToolOverride(
         category="transitions",
         summary="List available transitions for an issue.",
         keywords=("transition", "workflow", "status", "move"),
         aliases=("jira.list_transitions",),
-        example={"issue_key": "CAPSULE-123"},
+        example={"issue_key": "PROJ-123"},
     ),
     "create_issue": ToolOverride(
         category="issues",
         summary="Create a new Jira issue.",
         keywords=("create", "issue", "task", "bug", "story"),
         example={
-            "project_key": "CAPSULE",
+            "project_key": "PROJ",
             "summary": "Nueva tarea",
             "issue_type": "Task",
         },
@@ -154,19 +154,19 @@ JIRA_OVERRIDES: dict[str, ToolOverride] = {
         category="issues",
         summary="Update fields on an existing Jira issue.",
         keywords=("update", "edit", "issue", "fields"),
-        example={"issue_key": "CAPSULE-123", "fields": "{\"summary\":\"Actualizar resumen\"}"},
+        example={"issue_key": "PROJ-123", "fields": "{\"summary\":\"Actualizar resumen\"}"},
     ),
     "transition_issue": ToolOverride(
         category="transitions",
         summary="Move a Jira issue to another workflow status.",
         keywords=("transition", "status", "workflow", "done"),
-        example={"issue_key": "CAPSULE-123", "transition_id": "31"},
+        example={"issue_key": "PROJ-123", "transition_id": "31"},
     ),
     "add_comment": ToolOverride(
         category="comments",
         summary="Add a comment to a Jira issue.",
         keywords=("comment", "comentario", "notes", "reply"),
-        example={"issue_key": "CAPSULE-123", "comment": "Trabajo completado."},
+        example={"issue_key": "PROJ-123", "comment": "Trabajo completado."},
     ),
 }
 
@@ -175,13 +175,13 @@ CONFLUENCE_OVERRIDES: dict[str, ToolOverride] = {
         category="pages",
         summary="Search Confluence content using text or CQL.",
         keywords=("search", "cql", "wiki", "docs", "documentation"),
-        example={"query": "Capsule roadmap", "limit": 10},
+        example={"query": "project roadmap", "limit": 10},
     ),
     "get_page": ToolOverride(
         category="pages",
         summary="Get a Confluence page by id or title.",
         keywords=("page", "wiki", "content", "documentation"),
-        example={"title": "Capsule Planning", "space_key": "CAP"},
+        example={"title": "Project Planning", "space_key": "ENG"},
     ),
     "get_page_children": ToolOverride(
         category="pages",
@@ -193,16 +193,16 @@ CONFLUENCE_OVERRIDES: dict[str, ToolOverride] = {
         category="spaces",
         summary="Inspect the page hierarchy for a Confluence space.",
         keywords=("space", "tree", "hierarchy", "pages"),
-        example={"space_key": "CAP", "limit": 100},
+        example={"space_key": "ENG", "limit": 100},
     ),
     "create_page": ToolOverride(
         category="pages",
         summary="Create a new Confluence page.",
         keywords=("create", "page", "wiki", "documentation"),
         example={
-            "space_key": "CAP",
+            "space_key": "ENG",
             "title": "Nueva pagina",
-            "content": "# Capsule",
+            "content": "# Project Plan",
         },
     ),
     "update_page": ToolOverride(
@@ -211,7 +211,7 @@ CONFLUENCE_OVERRIDES: dict[str, ToolOverride] = {
         keywords=("update", "edit", "page", "wiki"),
         example={
             "page_id": "123456",
-            "title": "Capsule Planning",
+            "title": "Project Planning",
             "content": "# Actualizado",
         },
     ),
@@ -617,25 +617,25 @@ def _example_value(name: str, schema: dict[str, Any]) -> Any:
 
     lowered = name.lower()
     if lowered.endswith("_key") or lowered == "issue_key":
-        return "CAPSULE-123"
+        return "PROJ-123"
     if lowered.endswith("_id") or lowered == "page_id":
         return "123456"
     if "query" in lowered:
-        return "Capsule planning"
+        return "Project planning"
     if "jql" in lowered:
-        return "project = CAPSULE ORDER BY updated DESC"
+        return "project = PROJ ORDER BY updated DESC"
     if "cql" in lowered:
-        return "space = CAP AND type = page"
+        return "space = ENG AND type = page"
     if "space" in lowered:
-        return "CAP"
+        return "ENG"
     if "project" in lowered:
-        return "CAPSULE"
+        return "PROJ"
     if "title" in lowered:
-        return "Capsule Planning"
+        return "Project Planning"
     if "comment" in lowered:
         return "Actualizado."
     if "content" in lowered:
-        return "# Capsule"
+        return "# Project Plan"
     return name
 
 

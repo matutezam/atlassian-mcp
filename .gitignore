@@ -80,3 +80,6 @@ playground/
 
 # Dev docs (local task documents)
 dev/
+
+# Local repository instructions
+AGENTS.local.md
