@@ -237,7 +237,7 @@ async def build_domain_catalog(
     if not _service_available(domain, app_ctx):
         return DomainCatalog(domain=domain, capabilities=(), aliases={})
 
-    tools = await server.list_tools(run_middleware=False)
+    tools = await _load_registered_tools(server)
     overrides = DOMAIN_OVERRIDES[domain]
     capabilities: list[CapabilitySpec] = []
     aliases: dict[str, str] = {}
@@ -275,6 +275,22 @@ async def build_domain_catalog(
         capabilities=tuple(capabilities),
         aliases=aliases,
     )
+
+
+async def _load_registered_tools(server: FastMCP[MainAppContext]) -> list[Any]:
+    """Support FastMCP variants that expose either get_tools() or list_tools()."""
+    get_tools = getattr(server, "get_tools", None)
+    if callable(get_tools):
+        loaded = await get_tools()
+        if isinstance(loaded, dict):
+            return list(loaded.values())
+
+    list_tools = getattr(server, "list_tools", None)
+    if callable(list_tools):
+        loaded = await list_tools(run_middleware=False)
+        return list(loaded)
+
+    return []
 
 
 def infer_risk(intent: str, raw_risk: str | None) -> ProgressiveRisk:

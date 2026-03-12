@@ -32,6 +32,17 @@ class FakeServer:
         del run_middleware
         return self._tools
 
+    async def get_tools(self):
+        return {tool.name: tool for tool in self._tools}
+
+
+class GetToolsOnlyServer:
+    def __init__(self, tools):
+        self._tools = tools
+
+    async def get_tools(self):
+        return {tool.name: tool for tool in self._tools}
+
 
 @pytest.mark.anyio
 async def test_build_domain_catalog_adds_aliases_and_filters_readonly():
@@ -71,6 +82,30 @@ async def test_build_domain_catalog_adds_aliases_and_filters_readonly():
     readonly_ctx = MainAppContext(full_jira_config=object(), read_only=True)
     readonly_catalog = await build_domain_catalog("jira", server, readonly_ctx)
     assert {item.id for item in readonly_catalog.capabilities} == {"jira.search"}
+
+
+@pytest.mark.anyio
+async def test_build_domain_catalog_supports_get_tools_only_servers():
+    server = GetToolsOnlyServer(
+        [
+            FakeTool(
+                name="search",
+                tags={"jira", "read", "toolset:jira_issues"},
+                description="Search Jira issues using JQL.",
+                parameters={
+                    "type": "object",
+                    "properties": {"jql": {"type": "string"}},
+                    "required": ["jql"],
+                },
+            )
+        ]
+    )
+
+    catalog = await build_domain_catalog(
+        "jira", server, MainAppContext(full_jira_config=object(), read_only=False)
+    )
+
+    assert [item.id for item in catalog.capabilities] == ["jira.search"]
 
 
 def test_parse_capability_args_rejects_invalid_payloads():
