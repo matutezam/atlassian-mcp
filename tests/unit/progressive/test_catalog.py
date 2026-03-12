@@ -3,12 +3,15 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import pytest
+from fastmcp.tools.tool import ToolResult
+from mcp.types import TextContent
 
 from mcp_atlassian.progressive.catalog import (
     CapabilitySpec,
     DomainCatalog,
     build_domain_catalog,
     discover_capabilities,
+    execute_read_capability,
     execute_write_capability,
     parse_capability_args,
 )
@@ -22,6 +25,16 @@ class FakeTool:
     description: str
     parameters: dict
     annotations: object | None = None
+
+
+@dataclass
+class FakeRegisteredTool:
+    name: str
+    result: object
+
+    async def run(self, arguments):
+        del arguments
+        return self.result
 
 
 class FakeServer:
@@ -160,6 +173,51 @@ async def test_execute_write_capability_requires_approval():
         "capabilityId": "jira.create_issue",
         "blocked": True,
         "reason": "write_requires_approved_true",
+    }
+
+
+@pytest.mark.anyio
+async def test_execute_read_capability_supports_get_tools_only_runtime():
+    catalog = DomainCatalog(
+        domain="jira",
+        capabilities=(
+            CapabilitySpec(
+                id="jira.search",
+                tool_name="search",
+                mode="read",
+                category="issues",
+                summary="Search issue",
+                description="Search issue",
+                safety_class="safe",
+                keywords=("search",),
+                example={"jql": "project = PROJ"},
+                aliases=(),
+                args_schema={"type": "object", "properties": {}},
+            ),
+        ),
+        aliases={},
+    )
+    server = GetToolsOnlyServer(
+        [
+            FakeRegisteredTool(
+                name="search",
+                result=ToolResult(content=[TextContent(type="text", text='{"issues": []}')]),
+            )
+        ]
+    )
+
+    result = await execute_read_capability(
+        ctx=None,  # type: ignore[arg-type]
+        catalog=catalog,
+        server=server,  # type: ignore[arg-type]
+        capability_id="jira.search",
+        raw_args="{}",
+    )
+
+    assert result == {
+        "ok": True,
+        "capabilityId": "jira.search",
+        "data": {"issues": []},
     }
 
 

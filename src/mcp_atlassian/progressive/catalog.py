@@ -480,7 +480,15 @@ async def _run_capability(
 ) -> dict[str, Any]:
     del ctx
     try:
-        result = await server.call_tool(capability.tool_name, args, run_middleware=False)
+        call_tool = getattr(server, "call_tool", None)
+        if callable(call_tool):
+            result = await call_tool(capability.tool_name, args, run_middleware=False)
+        else:
+            tools = await _load_registered_tools(server)
+            tool = next((item for item in tools if item.name == capability.tool_name), None)
+            if tool is None:
+                raise ValueError(f"Tool not found: {capability.tool_name}")
+            result = await tool.run(args)
         if isinstance(result, ToolResult):
             data = _tool_result_to_data(result)
         else:
