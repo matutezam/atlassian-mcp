@@ -1204,7 +1204,7 @@ class TestBasicAuthMultiUser:
         credentials = {
             "user_email_context": "user@example.com",
             "user_email": "user@example.com",
-            "api_token": "user-api-token-123",
+            "api_token": "placeholder-user-api-token",
         }
 
         result = _create_user_config_for_fetcher(
@@ -1216,7 +1216,7 @@ class TestBasicAuthMultiUser:
         assert isinstance(result, expected_type)
         assert result.auth_type == "basic"
         assert result.username == "user@example.com"
-        assert result.api_token == "user-api-token-123"
+        assert result.api_token == "placeholder-user-api-token"
         assert result.personal_token is None
         assert result.oauth_config is None
 

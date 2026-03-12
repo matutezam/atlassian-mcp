@@ -413,7 +413,9 @@ class TestUserTokenMiddleware:
         """Test successful Basic auth header extraction."""
         import base64
 
-        credentials = base64.b64encode(b"user@example.com:api-token-123").decode()
+        email = "example-user@example.test"
+        api_token = "placeholder-basic-token"
+        credentials = base64.b64encode(f"{email}:{api_token}".encode()).decode()
         mock_scope["headers"] = [
             (b"authorization", f"Basic {credentials}".encode()),
         ]
@@ -427,8 +429,8 @@ class TestUserTokenMiddleware:
         # Verify credentials were extracted
         passed_scope = middleware.app.call_args[0][0]
         assert passed_scope["state"]["user_atlassian_auth_type"] == "basic"
-        assert passed_scope["state"]["user_atlassian_email"] == "user@example.com"
-        assert passed_scope["state"]["user_atlassian_api_token"] == "api-token-123"
+        assert passed_scope["state"]["user_atlassian_email"] == email
+        assert passed_scope["state"]["user_atlassian_api_token"] == api_token
         assert passed_scope["state"]["user_atlassian_token"] is None
 
     @pytest.mark.anyio
@@ -477,7 +479,7 @@ class TestUserTokenMiddleware:
         """Test that empty email in Basic auth returns 401."""
         import base64
 
-        encoded = base64.b64encode(b":api-token").decode()
+        encoded = base64.b64encode(b":placeholder-basic-token").decode()
         mock_scope["headers"] = [(b"authorization", f"Basic {encoded}".encode())]
 
         await middleware(mock_scope, mock_receive, mock_send)

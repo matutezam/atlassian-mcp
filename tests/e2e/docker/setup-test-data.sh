@@ -8,9 +8,14 @@ set -euo pipefail
 
 JIRA_BASE="${JIRA_BASE_URL:-http://localhost:8080}"
 CONFLUENCE_BASE="${CONFLUENCE_BASE_URL:-http://localhost:8090}"
-AUTH="${DC_ADMIN_CREDENTIALS:-admin:admin123}"
+AUTH="${DC_ADMIN_CREDENTIALS:-}"
 PROJECT_KEY="E2E"
 SPACE_KEY="E2E"
+
+if [ -z "$AUTH" ]; then
+  echo "Set DC_ADMIN_CREDENTIALS to a local E2E admin credential pair before running this script." >&2
+  exit 1
+fi
 
 # Helper: check HTTP status
 check_exists() {

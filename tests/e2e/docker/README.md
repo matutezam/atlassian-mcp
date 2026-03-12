@@ -89,10 +89,10 @@ docker compose down -v
 | --- | --- | --- |
 | `JIRA_VERSION` | `10.3-jdk17` | Jira DC Docker image tag |
 | `CONFLUENCE_VERSION` | `9.2-jdk17` | Confluence DC Docker image tag |
-| `JIRA_DB_PASSWORD` | `jira_e2e_pass` | Jira PostgreSQL password |
-| `CONFLUENCE_DB_PASSWORD` | `confluence_e2e_pass` | Confluence PostgreSQL password |
+| `JIRA_DB_PASSWORD` | `example_jira_db_password` | Jira PostgreSQL password |
+| `CONFLUENCE_DB_PASSWORD` | `example_confluence_db_password` | Confluence PostgreSQL password |
 | `JIRA_BASE_URL` | `http://localhost:8080` | Jira base URL (for scripts) |
 | `CONFLUENCE_BASE_URL` | `http://localhost:8090` | Confluence base URL (for scripts) |
-| `DC_ADMIN_CREDENTIALS` | `admin:admin123` | Admin credentials for REST API calls |
+| `DC_ADMIN_CREDENTIALS` | _required_ | Admin credentials for local REST API calls |
 | `HEALTHCHECK_TIMEOUT` | `300` | Max wait time in seconds for healthcheck |
 | `PAT_TOKEN_NAME` | `e2e-test-token` | Name for generated PAT tokens |

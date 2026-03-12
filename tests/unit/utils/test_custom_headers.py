@@ -131,8 +131,8 @@ class TestParseCustomHeaders:
     def test_complex_real_world_example(self, monkeypatch):
         """Test a complex real-world example."""
         headers_string = (
-            "Authorization=Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9,"
-            "X-API-Key=sk-1234567890abcdef,"
+            "Authorization=Bearer placeholder-bearer-token,"
+            "X-API-Key=example-api-key-value,"
             "X-Request-ID=req_123456789,"
             "X-Custom-Header=value with spaces and = signs,"
             "User-Agent=MyApp/1.0 (Custom Agent)"
@@ -141,8 +141,8 @@ class TestParseCustomHeaders:
         monkeypatch.setenv("TEST_HEADERS", headers_string)
         result = get_custom_headers("TEST_HEADERS")
         expected = {
-            "Authorization": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9",
-            "X-API-Key": "sk-1234567890abcdef",
+            "Authorization": "Bearer placeholder-bearer-token",
+            "X-API-Key": "example-api-key-value",
             "X-Request-ID": "req_123456789",
             "X-Custom-Header": "value with spaces and = signs",
             "User-Agent": "MyApp/1.0 (Custom Agent)",
