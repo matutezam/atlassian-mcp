@@ -83,8 +83,22 @@ progressive_mcp = ProgressiveAtlassianMCP(
 )
 
 
+def _extract_lifespan_context(ctx: Context) -> dict[str, Any] | None:
+    """Support both direct and request-scoped FastMCP context layouts."""
+    lifespan_ctx = getattr(ctx, "lifespan_context", None)
+    if isinstance(lifespan_ctx, dict):
+        return lifespan_ctx
+
+    request_context = getattr(ctx, "request_context", None)
+    request_lifespan_ctx = getattr(request_context, "lifespan_context", None)
+    if isinstance(request_lifespan_ctx, dict):
+        return request_lifespan_ctx
+
+    return None
+
+
 async def _get_app_context(ctx: Context) -> MainAppContext | None:
-    lifespan_ctx = ctx.lifespan_context
+    lifespan_ctx = _extract_lifespan_context(ctx)
     if isinstance(lifespan_ctx, dict):
         return lifespan_ctx.get("app_lifespan_context")
     return None
