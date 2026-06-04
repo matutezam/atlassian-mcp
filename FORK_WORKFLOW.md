@@ -42,6 +42,18 @@ Preserve intentionally:
 - `MCP_PROFILE=direct|progressive`,
 - local static API-key middleware behavior used by the deployed HTTP wrapper.
 
+
+## Deployment Status on Raspberry
+
+As of 2026-06-04:
+
+- `jira-mcp` in EasyPanel points to branch `codex/jira-progressive-upstream-sync` and includes the selective upstream reconciliation plus Nixpacks deployment fixes.
+- `confluence-mcp` in EasyPanel still points to `main` (`f7c7a0a`) and has not been reconciled/deployed with the Jira branch changes yet.
+- Codex keeps `jira_progressive.enabled=false`; do not enable it as part of Confluence maintenance.
+- Codex does not currently have `MCP_CONFLUENCE_AUTH`, so Confluence smoke tests require either adding a local auth env var or testing from an approved environment with the service API key.
+
+Do not assume Jira and Confluence deployments are on the same commit until this is explicitly reconciled.
+
 ## Validation
 
 Run local validation with `uv` when available:
