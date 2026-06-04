@@ -1,4 +1,7 @@
-# EasyPanel currently builds this service with Nixpacks.
-# Nixpacks' Python provider uses this variable when installing uv for uv.lock projects.
-[variables]
-NIXPACKS_UV_VERSION = "0.10.2"
+# EasyPanel builds this service with Nixpacks.
+# Keep uv pinned explicitly because EasyPanel/Nixpacks generated `pip install uv==`
+# when NIXPACKS_UV_VERSION was not available during the Docker RUN layer.
+[phases.install]
+cmds = [
+  "python -m venv --copies /opt/venv && . /opt/venv/bin/activate && pip install uv==0.10.2 && uv sync --no-dev --frozen"
+]
