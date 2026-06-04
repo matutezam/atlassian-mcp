@@ -5,3 +5,6 @@
 cmds = [
   "python -m venv --copies /opt/venv && . /opt/venv/bin/activate && pip install uv==0.10.2 && uv sync --no-dev --frozen"
 ]
+
+[start]
+cmd = "mcp-atlassian"
