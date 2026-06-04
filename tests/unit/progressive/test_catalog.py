@@ -121,6 +121,36 @@ async def test_build_domain_catalog_supports_get_tools_only_servers():
     assert [item.id for item in catalog.capabilities] == ["jira.search"]
 
 
+@pytest.mark.anyio
+async def test_build_domain_catalog_uses_body_examples_for_comments():
+    server = FakeServer(
+        [
+            FakeTool(
+                name="add_comment",
+                tags={"jira", "write", "toolset:jira_comments"},
+                description="Add a comment.",
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "issue_key": {"type": "string"},
+                        "body": {"type": "string"},
+                    },
+                    "required": ["issue_key", "body"],
+                },
+            )
+        ]
+    )
+
+    catalog = await build_domain_catalog(
+        "jira", server, MainAppContext(full_jira_config=object(), read_only=False)
+    )
+
+    assert catalog.capabilities[0].example == {
+        "issue_key": "PROJ-123",
+        "body": "Trabajo completado.",
+    }
+
+
 def test_parse_capability_args_rejects_invalid_payloads():
     invalid_json = parse_capability_args("jira.search", "not-json")
     assert invalid_json == {
@@ -218,6 +248,59 @@ async def test_execute_read_capability_supports_get_tools_only_runtime():
         "ok": True,
         "capabilityId": "jira.search",
         "data": {"issues": []},
+    }
+
+
+@pytest.mark.anyio
+async def test_execute_read_capability_rejects_embedded_tool_errors():
+    catalog = DomainCatalog(
+        domain="confluence",
+        capabilities=(
+            CapabilitySpec(
+                id="confluence.get_page",
+                tool_name="get_page",
+                mode="read",
+                category="pages",
+                summary="Get page",
+                description="Get page",
+                safety_class="safe",
+                keywords=("page",),
+                example={"page_id": "123456"},
+                aliases=(),
+                args_schema={"type": "object", "properties": {}},
+            ),
+        ),
+        aliases={},
+    )
+    server = GetToolsOnlyServer(
+        [
+            FakeRegisteredTool(
+                name="get_page",
+                result=ToolResult(
+                    content=[
+                        TextContent(
+                            type="text",
+                            text='{"result":"{\\"error\\":\\"Failed to retrieve page\\"}"}',
+                        )
+                    ]
+                ),
+            )
+        ]
+    )
+
+    result = await execute_read_capability(
+        ctx=None,  # type: ignore[arg-type]
+        catalog=catalog,
+        server=server,  # type: ignore[arg-type]
+        capability_id="confluence.get_page",
+        raw_args="{}",
+    )
+
+    assert result == {
+        "ok": False,
+        "capabilityId": "confluence.get_page",
+        "error": "Failed to retrieve page",
+        "data": {"result": {"error": "Failed to retrieve page"}},
     }
 
 

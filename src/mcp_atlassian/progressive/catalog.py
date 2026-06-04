@@ -166,7 +166,7 @@ JIRA_OVERRIDES: dict[str, ToolOverride] = {
         category="comments",
         summary="Add a comment to a Jira issue.",
         keywords=("comment", "comentario", "notes", "reply"),
-        example={"issue_key": "PROJ-123", "comment": "Trabajo completado."},
+        example={"issue_key": "PROJ-123", "body": "Trabajo completado."},
     ),
 }
 
@@ -219,7 +219,7 @@ CONFLUENCE_OVERRIDES: dict[str, ToolOverride] = {
         category="comments",
         summary="Add a comment to a Confluence page.",
         keywords=("comment", "comentario", "review"),
-        example={"page_id": "123456", "comment": "Revisado."},
+        example={"page_id": "123456", "body": "Revisado."},
     ),
 }
 
@@ -493,6 +493,15 @@ async def _run_capability(
             data = _tool_result_to_data(result)
         else:
             data = result
+        data = _normalize_capability_data(data)
+        embedded_error = _find_embedded_error(data)
+        if embedded_error is not None:
+            return {
+                "ok": False,
+                "capabilityId": capability.id,
+                "error": embedded_error,
+                "data": data,
+            }
         return {"ok": True, "capabilityId": capability.id, "data": data}
     except Exception as exc:
         return {
@@ -525,6 +534,55 @@ def _tool_result_to_data(result: ToolResult) -> Any:
         else:
             content_blocks.append({"type": getattr(block, "type", "unknown")})
     return content_blocks
+
+
+def _normalize_capability_data(data: Any) -> Any:
+    """Parse nested JSON strings commonly returned by FastMCP ToolResult."""
+    if isinstance(data, dict):
+        normalized = dict(data)
+        if isinstance(normalized.get("result"), str):
+            normalized["result"] = _parse_json_string(normalized["result"])
+        return normalized
+
+    return _parse_json_string(data)
+
+
+def _parse_json_string(value: Any) -> Any:
+    if not isinstance(value, str):
+        return value
+
+    trimmed = value.strip()
+    if not trimmed or trimmed[0] not in "[{":
+        return value
+
+    try:
+        return json.loads(trimmed)
+    except json.JSONDecodeError:
+        return value
+
+
+def _find_embedded_error(data: Any) -> str | None:
+    candidates = [data]
+    if isinstance(data, dict):
+        candidates.append(data.get("result"))
+
+    for candidate in candidates:
+        if not isinstance(candidate, dict):
+            continue
+
+        error = candidate.get("error")
+        if isinstance(error, str) and error.strip():
+            return error
+
+        error_messages = candidate.get("errorMessages")
+        if isinstance(error_messages, list) and error_messages:
+            return "; ".join(str(item) for item in error_messages)
+
+        if candidate.get("success") is False:
+            message = candidate.get("message") or candidate.get("details")
+            return str(message or "embedded_success_false")
+
+    return None
 
 
 def _service_available(domain: Domain, app_ctx: MainAppContext | None) -> bool:
