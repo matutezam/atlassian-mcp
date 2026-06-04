@@ -1,0 +1,4 @@
+# EasyPanel currently builds this service with Nixpacks.
+# Nixpacks' Python provider uses this variable when installing uv for uv.lock projects.
+[variables]
+NIXPACKS_UV_VERSION = "0.10.2"
