@@ -9,8 +9,8 @@ If `AGENTS.local.md` exists locally, read it as well and treat it as environment
 | Path | Purpose |
 | --- | --- |
 | `src/mcp_atlassian/` | Library source (Python ≥ 3.10) |
-| `  ├─ jira/` | Jira client + mixins for issues, search, transitions, SLA, metrics, and related APIs |
-| `  ├─ confluence/` | Confluence client + mixins for pages, search, analytics, comments, and related APIs |
+| `  ├─ jira/` | Jira client + 21 mixins for issues, search, transitions, SLA, metrics, and related APIs |
+| `  ├─ confluence/` | Confluence client + 8 mixins for pages, search, analytics, comments, and related APIs |
 | `  ├─ models/` | Pydantic v2 data models (`ApiModel` base) |
 | `  ├─ servers/` | FastMCP server instances and transport entrypoints |
 | `  ├─ progressive/` | Progressive capability catalog and guarded execution surface |
@@ -24,7 +24,7 @@ If `AGENTS.local.md` exists locally, read it as well and treat it as environment
 - `JiraFetcher` and `ConfluenceFetcher` compose service mixins and expose typed client behavior.
 - `servers/main.py` selects the runtime transport and profile, then wires dependencies through the application context.
 - `MCP_PROFILE=direct|progressive` controls whether the server exposes the full tool surface or the curated discovery surface.
-- Progressive mode exposes only `*_discover`, `*_capability_schema`, `*_execute_read`, and `*_execute_write_guarded`.
+- Progressive mode exposes only `*_discover`, `*_capability_schema`, `*_execute_read`, and `*_execute_write_guarded`. This is a local fork extension; upstream `sooperset/mcp-atlassian` does not currently ship `src/mcp_atlassian/progressive/`.
 - Config is environment-driven via `from_env()` factories on `JiraConfig` and `ConfluenceConfig`.
 - `READ_ONLY_MODE=true` blocks write tools at server level even when the caller requests a guarded write.
 
@@ -73,6 +73,13 @@ Tests, lint, and typing should be clean before pushing.
 - `snake_case` for functions and `PascalCase` for classes
 - Google-style docstrings for public APIs
 - Specific exceptions instead of broad catches
+
+## Fork maintenance
+
+- Upstream reconciliation is selective. Do not merge `upstream/main` directly unless you have explicitly verified it will not delete the progressive profile.
+- Preserve `src/mcp_atlassian/progressive/`, `tests/unit/progressive/`, `MCP_PROFILE=direct|progressive`, and the `get_server_for_profile()` entrypoint.
+- Prefer cherry-picking/adapting upstream dependency, auth, transport, and client fixes while keeping the progressive/catalog architecture intact.
+- Smoke test progressive deployments with `jira_discover`, `jira_capability_schema`, `jira_execute_read`, and `jira_execute_write_guarded` before enabling the connector in Codex.
 
 ## Gotchas
 

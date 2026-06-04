@@ -9,6 +9,12 @@
 
 Model Context Protocol (MCP) server for Atlassian products (Confluence and Jira). Supports both Cloud and Server/Data Center deployments.
 
+## Progressive Fork Profile
+
+This fork keeps the upstream direct Atlassian MCP surface and adds a local progressive profile controlled by `MCP_PROFILE=progressive`. In progressive mode the server exposes only discovery/schema/execution wrappers such as `jira_discover`, `jira_capability_schema`, `jira_execute_read`, and `jira_execute_write_guarded` instead of the full direct tool surface.
+
+Upstream `sooperset/mcp-atlassian` does not currently include this progressive layer, so upstream updates must be reconciled selectively. Do not merge upstream blindly or the progressive package/tests can be removed. See [FORK_WORKFLOW.md](./FORK_WORKFLOW.md).
+
 https://github.com/user-attachments/assets/35303504-14c6-4ae4-913b-7c25ea511c3e
 
 <details>
