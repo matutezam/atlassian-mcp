@@ -31,7 +31,17 @@ EXPLICIT_DANGER_REGEX = re.compile(
     re.IGNORECASE,
 )
 TOKEN_SYNONYMS: dict[str, list[str]] = {
-    "issue": ["issues", "ticket", "tickets", "task", "tasks", "incidencia", "incidencias", "tarea", "tareas"],
+    "issue": [
+        "issues",
+        "ticket",
+        "tickets",
+        "task",
+        "tasks",
+        "incidencia",
+        "incidencias",
+        "tarea",
+        "tareas",
+    ],
     "issues": ["issue", "ticket", "tickets", "task", "tasks"],
     "ticket": ["issue", "issues", "task", "tasks"],
     "tarea": ["task", "tasks", "issue", "issues"],
@@ -154,7 +164,7 @@ JIRA_OVERRIDES: dict[str, ToolOverride] = {
         category="issues",
         summary="Update fields on an existing Jira issue.",
         keywords=("update", "edit", "issue", "fields"),
-        example={"issue_key": "PROJ-123", "fields": "{\"summary\":\"Actualizar resumen\"}"},
+        example={"issue_key": "PROJ-123", "fields": '{"summary":"Actualizar resumen"}'},
     ),
     "transition_issue": ToolOverride(
         category="transitions",
@@ -390,7 +400,9 @@ async def execute_read_capability(
             "ok": False,
             "capabilityId": capability_id,
             "error": "unsupported_read_capability",
-            "allowed": [item.id for item in catalog.capabilities if item.mode == "read"],
+            "allowed": [
+                item.id for item in catalog.capabilities if item.mode == "read"
+            ],
         }
 
     return await _run_capability(ctx, server, capability, parsed_args["args"])
@@ -485,7 +497,9 @@ async def _run_capability(
             result = await call_tool(capability.tool_name, args, run_middleware=False)
         else:
             tools = await _load_registered_tools(server)
-            tool = next((item for item in tools if item.name == capability.tool_name), None)
+            tool = next(
+                (item for item in tools if item.name == capability.tool_name), None
+            )
             if tool is None:
                 raise ValueError(f"Tool not found: {capability.tool_name}")
             result = await tool.run(args)
@@ -600,9 +614,9 @@ def _is_tool_enabled(
 ) -> bool:
     enabled_tools = app_ctx.enabled_tools if app_ctx else None
     enabled_toolsets = app_ctx.enabled_toolsets if app_ctx else None
-    return should_include_tool(tool_name, enabled_tools) and should_include_tool_by_toolset(
-        tool_tags, enabled_toolsets
-    )
+    return should_include_tool(
+        tool_name, enabled_tools
+    ) and should_include_tool_by_toolset(tool_tags, enabled_toolsets)
 
 
 def _get_mode(tool_name: str, tool_tags: set[str]) -> CapabilityMode:
@@ -757,7 +771,9 @@ def _score_capability(
         score += 1
     if capability.mode == "write_guarded" and risk == "write":
         score += 1
-    if capability.safety_class == "dangerous" and not EXPLICIT_DANGER_REGEX.search(intent):
+    if capability.safety_class == "dangerous" and not EXPLICIT_DANGER_REGEX.search(
+        intent
+    ):
         score -= 3
     if domain in tokens:
         score += 2
@@ -796,7 +812,9 @@ def _fallback_capabilities(
         by_category.setdefault(capability.category, []).append(capability)
 
     ordered: list[CapabilitySpec] = []
-    category_order = JIRA_CATEGORY_ORDER if domain == "jira" else CONFLUENCE_CATEGORY_ORDER
+    category_order = (
+        JIRA_CATEGORY_ORDER if domain == "jira" else CONFLUENCE_CATEGORY_ORDER
+    )
     for category in category_order:
         category_items = sorted(by_category.get(category, []), key=lambda item: item.id)
         if category_items:

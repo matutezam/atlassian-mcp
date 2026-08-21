@@ -504,6 +504,8 @@ class ApiKeyMiddleware:
         except (AttributeError, ValueError) as exc:
             logger.warning("Error checking API key middleware path: %s", exc)
             return False
+
+
 class UserTokenMiddleware:
     """ASGI-compliant middleware to extract Atlassian user tokens/credentials.
 

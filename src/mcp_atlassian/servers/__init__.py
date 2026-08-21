@@ -1,9 +1,11 @@
 """MCP Atlassian Servers Package."""
 
+from fastmcp import FastMCP
+
 from .main import main_mcp
 
 
-def get_server_for_profile(profile: str):
+def get_server_for_profile(profile: str) -> FastMCP:
     if str(profile).strip().lower() == "progressive":
         from mcp_atlassian.progressive import progressive_mcp
 
@@ -11,7 +13,7 @@ def get_server_for_profile(profile: str):
     return main_mcp
 
 
-def __getattr__(name: str):
+def __getattr__(name: str) -> FastMCP:
     if name == "progressive_mcp":
         from mcp_atlassian.progressive import progressive_mcp
 
