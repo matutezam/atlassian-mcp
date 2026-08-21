@@ -185,7 +185,7 @@ class TestFetchAndEncodeAttachment:
             ("photo.jpeg", "image/jpeg"),
             ("photo.gif", "image/gif"),
             ("doc.pdf", "application/pdf"),
-            ("archive.zip", "application/zip"),
+            ("archive.zip", ("application/zip", "application/x-zip-compressed")),
             ("unknown", "application/octet-stream"),
         ],
         ids=[
@@ -201,7 +201,7 @@ class TestFetchAndEncodeAttachment:
     def test_mime_type_detection(
         self,
         filename: str,
-        expected_mime: str,
+        expected_mime: str | tuple[str, str],
     ) -> None:
         """MIME type is guessed from filename when not provided."""
         encoded, mime, size = fetch_and_encode_attachment(
@@ -210,7 +210,10 @@ class TestFetchAndEncodeAttachment:
             filename=filename,
         )
         assert encoded is not None
-        assert mime == expected_mime
+        if isinstance(expected_mime, tuple):
+            assert mime in expected_mime
+        else:
+            assert mime == expected_mime
         assert size == 4
 
     def test_fetched_size_at_limit_passes(self) -> None:

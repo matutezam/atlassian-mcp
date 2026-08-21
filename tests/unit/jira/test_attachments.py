@@ -61,8 +61,6 @@ class TestAttachmentsMixin:
 
     def test_download_attachment_success(self, attachments_mixin: AttachmentsMixin):
         """Test successful attachment download."""
-        import os
-
         # Mock the response
         mock_response = MagicMock()
         mock_response.iter_content.return_value = [b"test content"]
@@ -71,7 +69,7 @@ class TestAttachmentsMixin:
 
         # A subdirectory of CWD (downloads may not land in the CWD root itself).
         download_path = "/tmp/downloads/test_file.txt"
-        expected_path = os.path.abspath(download_path)
+        expected_path = download_path
 
         # Mock file operations
         with (
@@ -482,6 +480,7 @@ class TestAttachmentsMixin:
             "size": 100,
         }
         attachments_mixin.jira.add_attachment.return_value = mock_attachment_response
+        expected_path = str(Path("/absolute/path/test_file.txt").resolve())
 
         # Mock file operations
         with (
@@ -514,7 +513,7 @@ class TestAttachmentsMixin:
             assert result["size"] == 100
             assert result["id"] == "12345"
             attachments_mixin.jira.add_attachment.assert_called_once_with(
-                issue_key="TEST-123", filename="/absolute/path/test_file.txt"
+                issue_key="TEST-123", filename=expected_path
             )
 
     def test_upload_attachment_relative_path(
