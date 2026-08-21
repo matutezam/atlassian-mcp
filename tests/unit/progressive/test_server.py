@@ -10,7 +10,9 @@ def test_extract_lifespan_context_prefers_direct_context():
     app_ctx = MainAppContext(full_jira_config=object())
     ctx = SimpleNamespace(
         lifespan_context={"app_lifespan_context": app_ctx},
-        request_context=SimpleNamespace(lifespan_context={"app_lifespan_context": None}),
+        request_context=SimpleNamespace(
+            lifespan_context={"app_lifespan_context": None}
+        ),
     )
 
     lifespan_ctx = _extract_lifespan_context(ctx)  # type: ignore[arg-type]

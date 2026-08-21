@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import pytest
-from fastmcp.tools.tool import ToolResult
+from fastmcp.tools import ToolResult
 from mcp.types import TextContent
 
 from mcp_atlassian.progressive.catalog import (
@@ -231,7 +231,9 @@ async def test_execute_read_capability_supports_get_tools_only_runtime():
         [
             FakeRegisteredTool(
                 name="search",
-                result=ToolResult(content=[TextContent(type="text", text='{"issues": []}')]),
+                result=ToolResult(
+                    content=[TextContent(type="text", text='{"issues": []}')]
+                ),
             )
         ]
     )
@@ -335,7 +337,10 @@ def test_discover_capabilities_prefers_relevant_issue_search():
                 args_schema={"type": "object", "properties": {}},
             ),
         ),
-        aliases={"jira.search_issues": "jira.search", "jira.list_projects": "jira.get_all_projects"},
+        aliases={
+            "jira.search_issues": "jira.search",
+            "jira.list_projects": "jira.get_all_projects",
+        },
     )
 
     result = discover_capabilities(catalog, "buscar issues con jql", "read")

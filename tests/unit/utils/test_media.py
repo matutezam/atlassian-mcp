@@ -41,6 +41,22 @@ def test_attachment_max_bytes_value() -> None:
             "doc.pdf",
             (False, "application/octet-stream"),
         ),
+        # JSM customer-portal uploads report multipart/form-data
+        (
+            "multipart/form-data",
+            "WhatsApp Image 2026-08-15 at 23.28.03.jpeg",
+            (True, "image/jpeg"),
+        ),
+        (
+            "multipart/form-data",
+            "screenshot.png",
+            (True, "image/png"),
+        ),
+        (
+            "multipart/form-data",
+            "report.pdf",
+            (False, "multipart/form-data"),
+        ),
         # None MIME + image extension -> detected as image
         (None, "photo.png", (True, "image/png")),
         # None MIME + non-image extension -> not an image
@@ -56,6 +72,9 @@ def test_attachment_max_bytes_value() -> None:
         "octet-stream-jpg-ext",
         "binary-png-ext",
         "octet-stream-pdf-ext",
+        "jsm-portal-jpeg-ext",
+        "jsm-portal-png-ext",
+        "jsm-portal-pdf-ext",
         "none-mime-image-ext",
         "none-mime-pdf-ext",
         "both-none",
@@ -166,7 +185,7 @@ class TestFetchAndEncodeAttachment:
             ("photo.jpeg", "image/jpeg"),
             ("photo.gif", "image/gif"),
             ("doc.pdf", "application/pdf"),
-            ("archive.zip", "application/zip"),
+            ("archive.zip", ("application/zip", "application/x-zip-compressed")),
             ("unknown", "application/octet-stream"),
         ],
         ids=[
@@ -182,7 +201,7 @@ class TestFetchAndEncodeAttachment:
     def test_mime_type_detection(
         self,
         filename: str,
-        expected_mime: str,
+        expected_mime: str | tuple[str, str],
     ) -> None:
         """MIME type is guessed from filename when not provided."""
         encoded, mime, size = fetch_and_encode_attachment(
@@ -191,7 +210,10 @@ class TestFetchAndEncodeAttachment:
             filename=filename,
         )
         assert encoded is not None
-        assert mime == expected_mime
+        if isinstance(expected_mime, tuple):
+            assert mime in expected_mime
+        else:
+            assert mime == expected_mime
         assert size == 4
 
     def test_fetched_size_at_limit_passes(self) -> None:

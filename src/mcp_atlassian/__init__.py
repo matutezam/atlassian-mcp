@@ -28,6 +28,7 @@ if os.getenv(
         )
 
 import click
+from fastmcp import FastMCP
 from fastmcp import settings as fastmcp_settings
 
 # Fix high CPU usage on Windows - use SelectorEventLoop instead of ProactorEventLoop
@@ -82,7 +83,9 @@ async def _watch_parent_exit(stop_event: threading.Event) -> None:
     await loop.run_in_executor(None, _poll_parent_alive)
 
 
-async def _run_stdio_with_stdin_guard(server: object, run_kwargs: dict[str, object]) -> None:
+async def _run_stdio_with_stdin_guard(
+    server: FastMCP, run_kwargs: dict[str, object]
+) -> None:
     parent_watch_stop = threading.Event()
     server_task = asyncio.create_task(server.run_async(**run_kwargs))
     parent_task = asyncio.create_task(_watch_parent_exit(parent_watch_stop))
@@ -486,4 +489,8 @@ if __name__ == "__main__":
 
 
 def normalize_profile(value: str | None) -> str:
-    return "progressive" if str(value or "direct").strip().lower() == "progressive" else "direct"
+    return (
+        "progressive"
+        if str(value or "direct").strip().lower() == "progressive"
+        else "direct"
+    )

@@ -27,6 +27,13 @@ If `AGENTS.local.md` exists locally, read it as well and treat it as environment
 - Progressive mode exposes only `*_discover`, `*_capability_schema`, `*_execute_read`, and `*_execute_write_guarded`. This is a local fork extension; upstream `sooperset/mcp-atlassian` does not currently ship `src/mcp_atlassian/progressive/`.
 - Config is environment-driven via `from_env()` factories on `JiraConfig` and `ConfluenceConfig`.
 - `READ_ONLY_MODE=true` blocks write tools at server level even when the caller requests a guarded write.
+- `JiraFetcher` and `ConfluenceFetcher` compose service mixins and expose typed client behavior.
+- `servers/main.py` selects the runtime transport and profile, then wires dependencies through the application context.
+- `MCP_PROFILE=direct|progressive` controls whether the server exposes the full tool surface or the curated discovery surface.
+- Progressive mode exposes only `*_discover`, `*_capability_schema`, `*_execute_read`, and `*_execute_write_guarded`. This is a local fork extension; upstream `sooperset/mcp-atlassian` does not currently ship `src/mcp_atlassian/progressive/`.
+- Config is environment-driven via `from_env()` factories on `JiraConfig` and `ConfluenceConfig`.
+- Authentication supports basic, PAT, OAuth 2.0, and multi-tenant headers.
+- `READ_ONLY_MODE=true` blocks write tools at server level even when the caller requests a guarded write.
 
 ## Dev workflow
 
@@ -64,6 +71,8 @@ Tests, lint, and typing should be clean before pushing.
 4. New features need tests, and bug fixes need regression tests.
 5. Use conventional commit types such as `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `perf`, and `ci`.
 6. Prefer editing existing files over creating parallel alternatives.
+7. Do not mention tools or AI assistants in commit messages.
+8. After changing tool signatures or registrations, run `uv run python scripts/generate_tool_docs.py` and commit the diff; CI enforces this.
 
 ## Code conventions
 

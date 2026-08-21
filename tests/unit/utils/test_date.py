@@ -1,5 +1,7 @@
 "Tests for the date utility functions."
 
+import os
+
 import pytest
 
 from mcp_atlassian.utils import parse_date
@@ -39,6 +41,10 @@ def test_parse_date_rfc3339():
     )
 
 
+@pytest.mark.skipif(
+    os.name == "nt",
+    reason="Windows datetime.fromtimestamp does not support the year 9999 boundary",
+)
 def test_parse_date_timestamp_boundary_max_valid() -> None:
     """Test that maximum valid timestamp (year 9999) is handled correctly.
 

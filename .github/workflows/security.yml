@@ -1,0 +1,30 @@
+name: Security
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+
+jobs:
+  trufflehog:
+    name: Secret Scanning
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: TruffleHog secret scan
+        run: |
+          scan_dir="$RUNNER_TEMP/trufflehog-scan"
+          mkdir "$scan_dir"
+          git archive --format=tar HEAD | tar -x -C "$scan_dir"
+          docker run --rm -v "$scan_dir:/scan:ro" \
+            ghcr.io/trufflesecurity/trufflehog:3.97.0 \
+            filesystem /scan --results=verified,unknown --fail --no-update --github-actions

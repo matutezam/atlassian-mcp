@@ -172,7 +172,10 @@ async def jira_execute_write_guarded(
         ),
     ] = None,
     approved: Annotated[
-        bool, Field(default=False, description="Set true only after explicit human approval.")
+        bool,
+        Field(
+            default=False, description="Set true only after explicit human approval."
+        ),
     ] = False,
 ) -> dict[str, Any]:
     app_ctx = await _get_app_context(ctx)
@@ -189,7 +192,8 @@ async def jira_execute_write_guarded(
 async def confluence_discover(
     ctx: Context,
     intent: Annotated[
-        str | None, Field(default=None, description="What user wants to do in Confluence.")
+        str | None,
+        Field(default=None, description="What user wants to do in Confluence."),
     ] = None,
     risk: Annotated[
         str | None, Field(default=None, description="Use read or write.")
@@ -252,7 +256,10 @@ async def confluence_execute_write_guarded(
         ),
     ] = None,
     approved: Annotated[
-        bool, Field(default=False, description="Set true only after explicit human approval.")
+        bool,
+        Field(
+            default=False, description="Set true only after explicit human approval."
+        ),
     ] = False,
 ) -> dict[str, Any]:
     app_ctx = await _get_app_context(ctx)
