@@ -26,5 +26,5 @@ jobs:
           mkdir "$scan_dir"
           git archive --format=tar HEAD | tar -x -C "$scan_dir"
           docker run --rm -v "$scan_dir:/scan:ro" \
-            ghcr.io/trufflesecurity/trufflehog:3.95.9 \
+            ghcr.io/trufflesecurity/trufflehog:3.97.0 \
             filesystem /scan --results=verified,unknown --fail --no-update --github-actions

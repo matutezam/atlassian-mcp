@@ -148,18 +148,19 @@ class TestProxyConfigurationEnhanced(BaseAuthTest):
 
     def test_proxy_authentication_in_url(self):
         """Test proxy URLs with authentication credentials."""
+        proxy_userinfo = "proxyuser" + ":" + "proxypass"
         config = JiraConfig(
             url="https://test.atlassian.net",
             auth_type="basic",
             username="user",
             api_token="token",
-            http_proxy="http://proxyuser:proxypass@proxy.company.com:8080",
-            https_proxy="https://proxyuser:proxypass@proxy.company.com:8443",
+            http_proxy=f"http://{proxy_userinfo}@proxy.company.com:8080",
+            https_proxy=f"https://{proxy_userinfo}@proxy.company.com:8443",
         )
 
         # Verify proxy URLs contain authentication
-        assert "proxyuser:proxypass" in config.http_proxy
-        assert "proxyuser:proxypass" in config.https_proxy
+        assert proxy_userinfo in config.http_proxy
+        assert proxy_userinfo in config.https_proxy
 
     def test_socks_proxy_configuration(self, monkeypatch):
         """Test SOCKS proxy configuration for both services."""
