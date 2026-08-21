@@ -22,6 +22,9 @@ jobs:
 
       - name: TruffleHog secret scan
         run: |
-          docker run --rm -v "$GITHUB_WORKSPACE:/tmp" -w /tmp \
+          scan_dir="$RUNNER_TEMP/trufflehog-scan"
+          mkdir "$scan_dir"
+          git archive --format=tar HEAD | tar -x -C "$scan_dir"
+          docker run --rm -v "$scan_dir:/scan:ro" \
             ghcr.io/trufflesecurity/trufflehog:3.95.9 \
-            filesystem . --results=verified,unknown --fail --no-update --github-actions
+            filesystem /scan --results=verified,unknown --fail --no-update --github-actions
