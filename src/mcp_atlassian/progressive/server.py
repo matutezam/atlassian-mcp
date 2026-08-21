@@ -60,12 +60,12 @@ class ProgressiveAtlassianMCP(AtlassianMCP):
         if app_lifespan_state and app_lifespan_state.full_confluence_config is not None:
             allowed_names |= CONFLUENCE_EXTERNAL_TOOLS
 
-        all_tools = await self.get_tools()
+        all_tools = await self.list_tools(run_middleware=False)
         filtered_tools: list[MCPTool] = []
-        for registered_name, tool_obj in all_tools.items():
-            if registered_name not in allowed_names:
+        for tool_obj in all_tools:
+            if tool_obj.name not in allowed_names:
                 continue
-            mcp_tool = tool_obj.to_mcp_tool(name=registered_name)
+            mcp_tool = tool_obj.to_mcp_tool(name=tool_obj.name)
             _sanitize_schema_for_compatibility(mcp_tool)
             filtered_tools.append(mcp_tool)
 
