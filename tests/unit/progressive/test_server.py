@@ -149,9 +149,7 @@ async def test_progressive_list_tools_does_not_advertise_header_only_services(
 @pytest.mark.anyio
 async def test_progressive_tool_annotations_serialize_with_mcp_field_names():
     registered_tools = await progressive_mcp.list_tools(run_middleware=False)
-    tools = {
-        tool.name: tool.to_mcp_tool(name=tool.name) for tool in registered_tools
-    }
+    tools = {tool.name: tool.to_mcp_tool(name=tool.name) for tool in registered_tools}
 
     jira_discover = tools["jira_discover"]
     assert jira_discover.annotations is not None
