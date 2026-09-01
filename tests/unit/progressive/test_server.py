@@ -55,7 +55,13 @@ async def test_get_app_context_supports_request_context():
 
 @pytest.mark.anyio
 async def test_progressive_list_tools_uses_fastmcp_list_tools(monkeypatch):
-    app_ctx = MainAppContext(full_jira_config=object())
+    # _list_tools_mcp() now reuses AtlassianMCP's request filter context, whose
+    # production contract is MainAppContext.full_jira_config: JiraConfig | None.
+    # JiraConfig always exposes is_cloud; keep this fixture minimal while still
+    # respecting that contract so this test remains focused on list_tools().
+    app_ctx = MainAppContext(
+        full_jira_config=SimpleNamespace(is_cloud=False)  # type: ignore[arg-type]
+    )
     fake_tool = SimpleNamespace(
         name="jira_discover",
         to_mcp_tool=lambda *, name: SimpleNamespace(name=name),
@@ -81,3 +87,82 @@ async def test_progressive_list_tools_uses_fastmcp_list_tools(monkeypatch):
 
     list_tools.assert_awaited_once_with(run_middleware=False)
     assert [tool.name for tool in tools] == ["jira_discover"]
+
+
+@pytest.mark.anyio
+async def test_progressive_list_tools_falls_back_to_deployment_config(monkeypatch):
+    jira_tool = SimpleNamespace(
+        name="jira_discover",
+        to_mcp_tool=lambda *, name: SimpleNamespace(name=name),
+    )
+    confluence_tool = SimpleNamespace(
+        name="confluence_discover",
+        to_mcp_tool=lambda *, name: SimpleNamespace(name=name),
+    )
+    list_tools = AsyncMock(return_value=[jira_tool, confluence_tool])
+
+    monkeypatch.setattr(progressive_mcp, "list_tools", list_tools)
+    monkeypatch.setattr(progressive_mcp, "_tool_filter_context", lambda: None)
+    monkeypatch.setattr(
+        progressive_server_module,
+        "get_available_services",
+        lambda: {"jira": True, "confluence": False},
+    )
+    monkeypatch.setattr(
+        progressive_server_module,
+        "_sanitize_schema_for_compatibility",
+        lambda tool: None,
+    )
+
+    tools = await progressive_mcp._list_tools_mcp()
+
+    list_tools.assert_awaited_once_with(run_middleware=False)
+    assert [tool.name for tool in tools] == ["jira_discover"]
+
+
+@pytest.mark.anyio
+async def test_progressive_list_tools_does_not_advertise_header_only_services(
+    monkeypatch,
+):
+    jira_tool = SimpleNamespace(
+        name="jira_discover",
+        to_mcp_tool=lambda *, name: SimpleNamespace(name=name),
+    )
+    list_tools = AsyncMock(return_value=[jira_tool])
+
+    monkeypatch.setattr(progressive_mcp, "list_tools", list_tools)
+    monkeypatch.setattr(
+        progressive_mcp,
+        "_tool_filter_context",
+        lambda: {
+            "app_lifespan_state": MainAppContext(),
+            "header_based_services": {"jira": True, "confluence": False},
+        },
+    )
+
+    tools = await progressive_mcp._list_tools_mcp()
+
+    list_tools.assert_awaited_once_with(run_middleware=False)
+    assert tools == []
+
+
+@pytest.mark.anyio
+async def test_progressive_tool_annotations_serialize_with_mcp_field_names():
+    registered_tools = await progressive_mcp.list_tools(run_middleware=False)
+    tools = {tool.name: tool.to_mcp_tool(name=tool.name) for tool in registered_tools}
+
+    jira_discover = tools["jira_discover"]
+    assert jira_discover.annotations is not None
+    assert jira_discover.annotations.model_dump(exclude_none=True) == {
+        "readOnlyHint": True,
+        "openWorldHint": False,
+    }
+
+    jira_write = tools["jira_execute_write_guarded"]
+    assert jira_write.annotations is not None
+    assert jira_write.annotations.model_dump(exclude_none=True) == {
+        "readOnlyHint": False,
+        "destructiveHint": True,
+        "idempotentHint": False,
+        "openWorldHint": True,
+    }
