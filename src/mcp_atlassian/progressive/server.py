@@ -65,8 +65,7 @@ class ProgressiveAtlassianMCP(AtlassianMCP):
             # advertise progressive tools until that request-scoped availability is
             # propagated into catalog construction as well.
             jira_available = bool(
-                app_lifespan_state
-                and app_lifespan_state.full_jira_config is not None
+                app_lifespan_state and app_lifespan_state.full_jira_config is not None
             )
             confluence_available = bool(
                 app_lifespan_state
