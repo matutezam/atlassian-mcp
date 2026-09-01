@@ -58,16 +58,11 @@ class ProgressiveAtlassianMCP(AtlassianMCP):
         allowed_names: set[str] = set()
 
         if filter_ctx is not None:
-            app_lifespan_state: MainAppContext | None = filter_ctx[
-                "app_lifespan_state"
-            ]
+            app_lifespan_state: MainAppContext | None = filter_ctx["app_lifespan_state"]
             header_based_services = filter_ctx["header_based_services"]
 
             jira_available = bool(
-                (
-                    app_lifespan_state
-                    and app_lifespan_state.full_jira_config is not None
-                )
+                (app_lifespan_state and app_lifespan_state.full_jira_config is not None)
                 or header_based_services.get("jira", False)
             )
             confluence_available = bool(
@@ -80,9 +75,7 @@ class ProgressiveAtlassianMCP(AtlassianMCP):
         else:
             configured_services = get_available_services()
             jira_available = bool(configured_services.get("jira", False))
-            confluence_available = bool(
-                configured_services.get("confluence", False)
-            )
+            confluence_available = bool(configured_services.get("confluence", False))
 
         if jira_available:
             allowed_names |= JIRA_EXTERNAL_TOOLS
