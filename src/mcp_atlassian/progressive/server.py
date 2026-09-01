@@ -49,7 +49,7 @@ class ProgressiveAtlassianMCP(AtlassianMCP):
         """Return a stable progressive tool surface for MCP client scans.
 
         ChatGPT and other remote MCP clients may enumerate tools outside the request
-        shape used for normal tool execution.  Do not collapse the catalog to an
+        shape used for normal tool execution. Do not collapse the catalog to an
         empty list merely because request-scoped lifespan state is unavailable.
         Prefer the normal request-aware service detection when possible, then fall
         back to deployment configuration (environment/OAuth/external-auth flags).
@@ -59,18 +59,18 @@ class ProgressiveAtlassianMCP(AtlassianMCP):
 
         if filter_ctx is not None:
             app_lifespan_state: MainAppContext | None = filter_ctx["app_lifespan_state"]
-            header_based_services = filter_ctx["header_based_services"]
 
+            # Progressive capability catalogs are currently built from the
+            # application context. Header-only multi-tenant availability must not
+            # advertise progressive tools until that request-scoped availability is
+            # propagated into catalog construction as well.
             jira_available = bool(
-                (app_lifespan_state and app_lifespan_state.full_jira_config is not None)
-                or header_based_services.get("jira", False)
+                app_lifespan_state
+                and app_lifespan_state.full_jira_config is not None
             )
             confluence_available = bool(
-                (
-                    app_lifespan_state
-                    and app_lifespan_state.full_confluence_config is not None
-                )
-                or header_based_services.get("confluence", False)
+                app_lifespan_state
+                and app_lifespan_state.full_confluence_config is not None
             )
         else:
             configured_services = get_available_services()
@@ -130,7 +130,7 @@ async def _get_app_context(ctx: Context) -> MainAppContext | None:
     name="jira_discover",
     title="Discover Jira capabilities",
     description="Discover a short list of relevant Jira capabilities based on intent and risk.",
-    annotations=ToolAnnotations(read_only_hint=True, open_world_hint=False),
+    annotations=ToolAnnotations(readOnlyHint=True, openWorldHint=False),
 )
 async def jira_discover(
     ctx: Context,
@@ -150,7 +150,7 @@ async def jira_discover(
     name="jira_capability_schema",
     title="Get Jira capability schema",
     description="Return full input schema and usage examples for one Jira capability.",
-    annotations=ToolAnnotations(read_only_hint=True, open_world_hint=False),
+    annotations=ToolAnnotations(readOnlyHint=True, openWorldHint=False),
 )
 async def jira_capability_schema(
     ctx: Context,
@@ -167,7 +167,7 @@ async def jira_capability_schema(
     name="jira_execute_read",
     title="Read from Jira",
     description="Execute approved read-only Jira capabilities.",
-    annotations=ToolAnnotations(read_only_hint=True, open_world_hint=True),
+    annotations=ToolAnnotations(readOnlyHint=True, openWorldHint=True),
 )
 async def jira_execute_read(
     ctx: Context,
@@ -190,10 +190,10 @@ async def jira_execute_read(
     title="Write to Jira (guarded)",
     description="Execute Jira write capability only when approved=true. Otherwise returns blocked response.",
     annotations=ToolAnnotations(
-        read_only_hint=False,
-        destructive_hint=True,
-        idempotent_hint=False,
-        open_world_hint=True,
+        readOnlyHint=False,
+        destructiveHint=True,
+        idempotentHint=False,
+        openWorldHint=True,
     ),
 )
 async def jira_execute_write_guarded(
@@ -224,7 +224,7 @@ async def jira_execute_write_guarded(
     name="confluence_discover",
     title="Discover Confluence capabilities",
     description="Discover a short list of relevant Confluence capabilities based on intent and risk.",
-    annotations=ToolAnnotations(read_only_hint=True, open_world_hint=False),
+    annotations=ToolAnnotations(readOnlyHint=True, openWorldHint=False),
 )
 async def confluence_discover(
     ctx: Context,
@@ -245,7 +245,7 @@ async def confluence_discover(
     name="confluence_capability_schema",
     title="Get Confluence capability schema",
     description="Return full input schema and usage examples for one Confluence capability.",
-    annotations=ToolAnnotations(read_only_hint=True, open_world_hint=False),
+    annotations=ToolAnnotations(readOnlyHint=True, openWorldHint=False),
 )
 async def confluence_capability_schema(
     ctx: Context,
@@ -262,7 +262,7 @@ async def confluence_capability_schema(
     name="confluence_execute_read",
     title="Read from Confluence",
     description="Execute approved read-only Confluence capabilities.",
-    annotations=ToolAnnotations(read_only_hint=True, open_world_hint=True),
+    annotations=ToolAnnotations(readOnlyHint=True, openWorldHint=True),
 )
 async def confluence_execute_read(
     ctx: Context,
@@ -287,10 +287,10 @@ async def confluence_execute_read(
     title="Write to Confluence (guarded)",
     description="Execute Confluence write capability only when approved=true. Otherwise returns blocked response.",
     annotations=ToolAnnotations(
-        read_only_hint=False,
-        destructive_hint=True,
-        idempotent_hint=False,
-        open_world_hint=True,
+        readOnlyHint=False,
+        destructiveHint=True,
+        idempotentHint=False,
+        openWorldHint=True,
     ),
 )
 async def confluence_execute_write_guarded(
