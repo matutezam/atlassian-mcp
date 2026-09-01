@@ -118,3 +118,53 @@ async def test_progressive_list_tools_falls_back_to_deployment_config(monkeypatc
 
     list_tools.assert_awaited_once_with(run_middleware=False)
     assert [tool.name for tool in tools] == ["jira_discover"]
+
+
+@pytest.mark.anyio
+async def test_progressive_list_tools_does_not_advertise_header_only_services(
+    monkeypatch,
+):
+    jira_tool = SimpleNamespace(
+        name="jira_discover",
+        to_mcp_tool=lambda *, name: SimpleNamespace(name=name),
+    )
+    list_tools = AsyncMock(return_value=[jira_tool])
+
+    monkeypatch.setattr(progressive_mcp, "list_tools", list_tools)
+    monkeypatch.setattr(
+        progressive_mcp,
+        "_tool_filter_context",
+        lambda: {
+            "app_lifespan_state": MainAppContext(),
+            "header_based_services": {"jira": True, "confluence": False},
+        },
+    )
+
+    tools = await progressive_mcp._list_tools_mcp()
+
+    list_tools.assert_awaited_once_with(run_middleware=False)
+    assert tools == []
+
+
+@pytest.mark.anyio
+async def test_progressive_tool_annotations_serialize_with_mcp_field_names():
+    registered_tools = await progressive_mcp.list_tools(run_middleware=False)
+    tools = {
+        tool.name: tool.to_mcp_tool(name=tool.name) for tool in registered_tools
+    }
+
+    jira_discover = tools["jira_discover"]
+    assert jira_discover.annotations is not None
+    assert jira_discover.annotations.model_dump(exclude_none=True) == {
+        "readOnlyHint": True,
+        "openWorldHint": False,
+    }
+
+    jira_write = tools["jira_execute_write_guarded"]
+    assert jira_write.annotations is not None
+    assert jira_write.annotations.model_dump(exclude_none=True) == {
+        "readOnlyHint": False,
+        "destructiveHint": True,
+        "idempotentHint": False,
+        "openWorldHint": True,
+    }
