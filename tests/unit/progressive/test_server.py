@@ -55,7 +55,13 @@ async def test_get_app_context_supports_request_context():
 
 @pytest.mark.anyio
 async def test_progressive_list_tools_uses_fastmcp_list_tools(monkeypatch):
-    app_ctx = MainAppContext(full_jira_config=object())
+    # _list_tools_mcp() now reuses AtlassianMCP's request filter context, whose
+    # production contract is MainAppContext.full_jira_config: JiraConfig | None.
+    # JiraConfig always exposes is_cloud; keep this fixture minimal while still
+    # respecting that contract so this test remains focused on list_tools().
+    app_ctx = MainAppContext(
+        full_jira_config=SimpleNamespace(is_cloud=False)  # type: ignore[arg-type]
+    )
     fake_tool = SimpleNamespace(
         name="jira_discover",
         to_mcp_tool=lambda *, name: SimpleNamespace(name=name),
