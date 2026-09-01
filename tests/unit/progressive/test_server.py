@@ -81,3 +81,34 @@ async def test_progressive_list_tools_uses_fastmcp_list_tools(monkeypatch):
 
     list_tools.assert_awaited_once_with(run_middleware=False)
     assert [tool.name for tool in tools] == ["jira_discover"]
+
+
+@pytest.mark.anyio
+async def test_progressive_list_tools_falls_back_to_deployment_config(monkeypatch):
+    jira_tool = SimpleNamespace(
+        name="jira_discover",
+        to_mcp_tool=lambda *, name: SimpleNamespace(name=name),
+    )
+    confluence_tool = SimpleNamespace(
+        name="confluence_discover",
+        to_mcp_tool=lambda *, name: SimpleNamespace(name=name),
+    )
+    list_tools = AsyncMock(return_value=[jira_tool, confluence_tool])
+
+    monkeypatch.setattr(progressive_mcp, "list_tools", list_tools)
+    monkeypatch.setattr(progressive_mcp, "_tool_filter_context", lambda: None)
+    monkeypatch.setattr(
+        progressive_server_module,
+        "get_available_services",
+        lambda: {"jira": True, "confluence": False},
+    )
+    monkeypatch.setattr(
+        progressive_server_module,
+        "_sanitize_schema_for_compatibility",
+        lambda tool: None,
+    )
+
+    tools = await progressive_mcp._list_tools_mcp()
+
+    list_tools.assert_awaited_once_with(run_middleware=False)
+    assert [tool.name for tool in tools] == ["jira_discover"]
