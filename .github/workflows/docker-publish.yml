@@ -2,6 +2,8 @@ name: Docker Publish
 
 on:
   push:
+    branches:
+      - main     # Publish the rolling main image after merges/pushes to main
     tags:
       - 'v*.*.*' # Trigger on version tag pushes (e.g., v0.7.1)
   pull_request:
